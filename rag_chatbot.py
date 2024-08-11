@@ -17,7 +17,7 @@ from tools.chromadata import retrieve_bm25
 from tools.prompt.react_template import get_react_template
 
 # set up for openai
-os.environ['OPENAI_API_KEY'] = 
+os.environ['OPENAI_API_KEY'] = ""
 load_dotenv()
 
 llm = ChatOpenAI(model="gpt-4o-mini")

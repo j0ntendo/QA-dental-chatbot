@@ -73,7 +73,7 @@ def get_post_content(post_url, post_id):
 def scrape_forum(start_url):
     all_data = []
     post_id = 1
-    for page_number in range(1, 45):  # Adjust the range according to the number of pages
+    for page_number in range(1, 10):  # Adjust the range according to the number of pages
         page_url = f"{start_url}?page={page_number}"
         print(f"Scraping page: {page_number}")
         post_urls = get_forum_posts(page_url)
@@ -82,16 +82,21 @@ def scrape_forum(start_url):
             post_data = get_post_content(post_url, post_id)
             all_data.append(post_data)
             post_id += 1
-            time.sleep(1)  # To avoid being blocked by the server
     return all_data
 
 # Start scraping
-start_url = 'https://www.dentistry-forums.com/forums/patient-forum.17/'
+start_url = 'https://www.dentistry-forums.com/forums/dental-restoration.18/'
 data = scrape_forum(start_url)
 
 # Output the data to a JSON file
-with open('forum_data.json', 'w', encoding='utf-8') as f:
+with open('dentalrestoration_data.json', 'w', encoding='utf-8') as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
 
 # Close the WebDriver
 driver.quit()
+
+
+# https://www.dentistry-forums.com/forums/periodontics.11/ #7
+# https://www.dentistry-forums.com/forums/orthodontics.12/ #7
+# https://www.dentistry-forums.com/forums/oral-surgery.13/ #18
+# https://www.dentistry-forums.com/forums/dental-restoration.18/ # 10

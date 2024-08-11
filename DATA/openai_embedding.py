@@ -1,27 +1,14 @@
-import logging
-import os
 import json
+import os
+import logging
 from uuid import uuid4
-from time import sleep
-from langchain_openai import OpenAIEmbeddings
-from langchain_chroma import Chroma
-from langchain_core.documents import Document
-
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain.schema import Document
 
 logging.basicConfig(level=logging.INFO)
+os.environ['OPENAI_API_KEY'] = ""
 
-
-os.environ["OPENAI_API_KEY"] = 
-
-
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-
-
-vector_store = Chroma(
-    collection_name="dental_forum",
-    embedding_function=embeddings,
-    persist_directory="./chroma_langchain_db",
-)
 
 def load_json(file_path):
     """Load JSON data from a file."""
@@ -29,36 +16,44 @@ def load_json(file_path):
         return json.load(file)
 
 def create_documents(data):
-    """Create a list of Document objects from JSON data with UUIDs."""
+    """Create Document objects for each entry in the dataset."""
     documents = []
-    uuids = []
     for item in data:
-        doc_id = str(uuid4())  
-        doc = Document(
+        doc_id = str(uuid4())
+        dialogue_doc = Document(
             page_content=item['dialogue'],  
-            metadata={"title": item.get('title', '')},
-            id=doc_id  
+            metadata={"id": item['id'], "title": item['title']},  
+            id=doc_id
         )
-        documents.append(doc)
-        uuids.append(doc_id)
-    return documents, uuids
+        documents.append(dialogue_doc)
+    return documents
 
-def add_documents_to_chroma(documents, uuids):
-    """Add documents to ChromaDB with embeddings."""
-    vector_store.add_documents(documents=documents, ids=uuids)
-    logging.info("Documents have been added to ChromaDB.")
+def embed_and_store(documents):
+    
+    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+
+    
+    vector_store = Chroma(
+        collection_name="dental_restoration_data",
+        embedding_function=embeddings,
+        persist_directory="./chroma_langchain_db",
+    )
+
+    
+    vector_store.add_documents(documents=documents)
+    vector_store.persist()  
+
+    print("Documents have been embedded and stored in ChromaDB.")
 
 def main():
     
-    json_data = load_json('DATA/dental_QA.json')
+    json_data = load_json('DATA/dental_restoration_data.json')
+
     
+    documents = create_documents(json_data)
+
     
-    documents, uuids = create_documents(json_data)
-    
-    
-    add_documents_to_chroma(documents, uuids)
-    
-    logging.info("All documents have been added to ChromaDB.")
+    embed_and_store(documents)
 
 if __name__ == "__main__":
     main()
