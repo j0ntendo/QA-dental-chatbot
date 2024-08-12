@@ -1,19 +1,24 @@
-
-from langchain_chroma import Chroma
-from langchain_community.retrievers import BM25Retriever
-from langchain.agents import tool
 import os
-from langchain_openai import OpenAIEmbeddings
-from langchain.schema import Document
+
 from dotenv import load_dotenv
+
+from langchain_community.vectorstores.chroma import Chroma
+from langchain_community.retrievers.bm25 import BM25Retriever
+from langchain.agents import tool
+
+from langchain_community.embeddings.openai import OpenAIEmbeddings
+from langchain.schema import Document
+
 from langchain import hub
 from langchain.prompts import PromptTemplate
 from langchain.agents import AgentExecutor, create_react_agent
-from langchain_openai import OpenAI
+# from langchain_community.llms import OpenAI
+from langchain_community.chat_models import ChatOpenAI as OpenAI
+# from langchain_openai import OpenAI
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.tools import DuckDuckGoSearchResults
 
-os.environ['OPENAI_API_KEY'] = ""
 
 load_dotenv()
 
@@ -62,36 +67,41 @@ def initialize_vector_store():
     )
 
 
-# @tool
-# def bm25_retrieval(query: str):
-#     """
-#     Retrieves relevant documents from the Chroma vector store using the BM25 algorithm.
+@tool
+def bm25_retrieval(query: str):
+    """
+    Retrieves relevant documents from the Chroma vector store using the BM25 algorithm.
 
-#     Args:
-#         query (str): The search query used to find relevant documents.
+    Args:
+        query (str): The search query used to find relevant documents.
 
-#     Returns:
-#         List[Dict[str, str]]: A list of dictionaries where each dictionary contains the title and dialogue of the retrieved documents.
-#     """
-#     vector_store = initialize_vector_store()
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries where each dictionary contains the title and dialogue of the retrieved documents.
+    """
+    vector_store = initialize_vector_store()
+
+    # Fetch all documents
+    documents = vector_store.get()
+
+    text_spliter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0,
+                                                  length_function=len)
+
+    documents = text_spliter.create_documents(texts=documents["documents"],
+                                              metadatas=documents["metadatas"])
+    
+    # Convert raw documents to Document objects if needed
+    #documents = [Document(page_content=doc['page_content'], metadata=doc['metadata']) for doc in raw_documents['documents']]
+    
+    bm25_retriever = BM25Retriever.from_documents(documents)
 
     
-#     # Fetch all documents
-#     documents = vector_store.get_by_ids("ids")
-#     # Convert raw documents to Document objects if needed
-#     #documents = [Document(page_content=doc['page_content'], metadata=doc['metadata']) for doc in raw_documents['documents']]
+    results = bm25_retriever.get_relevant_documents(query)
 
     
-#     bm25_retriever = BM25Retriever.from_documents(documents)
-
-    
-#     results = bm25_retriever.get_relevant_documents(query)
-
-    
-#     formatted_results = [
-#         {"title": doc.metadata['title'], "dialogue": doc.page_content} for doc in results
-#     ]
-#     return formatted_results
+    formatted_results = [
+        {"title": doc.metadata['title'], "dialogue": doc.page_content} for doc in results
+    ]
+    return formatted_results
 
 @tool
 def mmr_retrieval(query: str):
@@ -143,10 +153,18 @@ def ddg_retrieval(query: str):
 
 
 
-llm = OpenAI()
+llm = OpenAI(
+    # model_name="gpt-4o-mini",
+    # temperature=0.7,
+    # api_key=os.getenv("OPENAI_API_KEY")
+)
 
 
-tools = [ddg_retrieval]
+tools = [
+    # ddg_retrieval,
+    bm25_retrieval, 
+    # mmr_retrieval
+    ]
 
 
 prompt = get_react_template()
@@ -155,7 +173,10 @@ prompt = get_react_template()
 react_agent = create_react_agent(llm, tools, prompt)
 
 
-agent_executor = AgentExecutor(agent=react_agent, tools=tools, verbose=True)
+agent_executor = AgentExecutor(agent=react_agent, 
+                               tools=tools, 
+                               verbose=True,
+                               handle_parsing_errors=True)
 
 
 user_input = "can I drink cola after wisdom teeth removal?"

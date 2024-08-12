@@ -3,3 +3,6 @@ st.secrets/
 st.secrets
 robot
 robot/
+.env
+__pycahce__
+__pycache__/*

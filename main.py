@@ -2,9 +2,9 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain import hub
-from tools.system_time_tool import check_system_time
+# from tools.system_time_tool import check_system_time
 import os
-os.environ['OPENAI_API_KEY'] = 
+
 # load environment variables
 load_dotenv()
 
@@ -18,7 +18,7 @@ query = "What is the current time?"
 prompt_template = hub.pull("hwchase17/react")
 
 # set the tools
-tools = [check_system_time]
+tools = []
 
 # Construct the ReAct agent
 agent = create_react_agent(llm, tools, prompt_template)
