@@ -26,7 +26,7 @@ def calculate_total_tokens(data, max_token_limit):
 MAX_TOKEN_LIMIT = 4096
 
 # Load JSON data from file
-with open('DATA/dentalrestoration_data.json', 'r', encoding='utf-8') as file:
+with open('DATA/dental_restoration_data.json', 'r', encoding='utf-8') as file:
     json_data = json.load(file)
 
 # Calculate the total number of tokens required and check for token limits

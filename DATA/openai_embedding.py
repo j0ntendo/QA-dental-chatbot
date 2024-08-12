@@ -1,5 +1,6 @@
-import json
 import os
+from dotenv import load_dotenv
+import json
 import logging
 from uuid import uuid4
 from langchain_community.vectorstores import Chroma
@@ -7,8 +8,7 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.schema import Document
 
 logging.basicConfig(level=logging.INFO)
-os.environ['OPENAI_API_KEY'] = ""
-
+load_dotenv()
 
 def load_json(file_path):
     """Load JSON data from a file."""
@@ -30,11 +30,11 @@ def create_documents(data):
 
 def embed_and_store(documents):
     
-    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
     
     vector_store = Chroma(
-        collection_name="dental_restoration_data",
+        collection_name="periodontics_data",
         embedding_function=embeddings,
         persist_directory="./chroma_langchain_db",
         # metadata={"hnsw:space": "cosine"}
@@ -48,7 +48,7 @@ def embed_and_store(documents):
 
 def main():
     
-    json_data = load_json('DATA/dental_restoration_data.json')
+    json_data = load_json('DATA/periodontics_data.json')
 
     
     documents = create_documents(json_data)

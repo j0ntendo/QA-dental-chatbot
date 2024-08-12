@@ -83,7 +83,8 @@ def bm25_retrieval(query: str):
     # Fetch all documents
     documents = vector_store.get()
 
-    text_spliter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0,
+    text_spliter = RecursiveCharacterTextSplitter(chunk_size=1000,
+                                                  chunk_overlap=0,
                                                   length_function=len)
 
     documents = text_spliter.create_documents(texts=documents["documents"],
@@ -161,9 +162,9 @@ llm = OpenAI(
 
 
 tools = [
-    # ddg_retrieval,
+    ddg_retrieval,
     bm25_retrieval, 
-    # mmr_retrieval
+    mmr_retrieval
     ]
 
 
