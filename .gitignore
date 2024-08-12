@@ -3,3 +3,4 @@ st.secrets/
 st.secrets
 robot
 robot/
+.env
