@@ -4,5 +4,5 @@ st.secrets
 robot
 robot/
 .env
-__pycahce__
+__pycache__
 __pycache__/*
