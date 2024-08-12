@@ -37,6 +37,7 @@ def embed_and_store(documents):
         collection_name="dental_restoration_data",
         embedding_function=embeddings,
         persist_directory="./chroma_langchain_db",
+        # metadata={"hnsw:space": "cosine"}
     )
 
     
