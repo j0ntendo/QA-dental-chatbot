@@ -9,7 +9,7 @@ os.environ['OPENAI_API_KEY'] =
 load_dotenv()
 
 # Choose the LLM to use
-llm = ChatOpenAI(model="gpt-4")
+llm = ChatOpenAI(model="gpt-4o-mini")
 
 # set my message
 query = "What is the current time?"
