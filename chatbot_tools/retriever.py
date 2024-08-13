@@ -19,58 +19,42 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.tools import DuckDuckGoSearchResults
 
-
 load_dotenv()
 
-def get_react_template():
-    return PromptTemplate.from_template("""You are a chatbot, answer the following questions as best you can. You have access to the following tools:
+# Shared persist directory
+persist_directory = "./chroma_langchain_db"
 
-{tools}
+# List of collection names
+collection_names = [
+    "dental_restoration_data",
+    "genden_data",
+    "oralsurgery_data",
+    "orthodontics_data",
+    "patient_data",
+    "periodontics_data"
+]
 
-Use the following format:
-
-Question: the input question you must answer
-
-Thought: you should always think about what to do
-
-Action: the action to take, should be one of [{tool_names}]
-
-Action Input: the input to the action
-
-Observation: the result of the action
-
-... (this Thought/Action/Action Input/Observation can repeat N times)
-
-Thought: I now know the final answer
-
-Final Answer: the final answer to the original input question
-
-Begin!
-
-Question: {input}
-
-Thought:{agent_scratchpad}
-                                        """)
-
-def initialize_vector_store():
+def initialize_vector_store(collection_name):
     """
-    Initializes and returns a Chroma vector store for the 'dental_restoration_data' collection.
+    Initializes and returns a Chroma vector store for the given collection in the shared persist directory.
+
+    Args:
+        collection_name (str): The name of the collection.
 
     Returns:
         Chroma: The initialized Chroma vector store.
     """
-    embedding_function = OpenAIEmbeddings()  # Specify the embedding functio
+    embedding_function = OpenAIEmbeddings(model="text-embedding-3-large")  # Specify the embedding function
     return Chroma(
-        collection_name="dental_restoration_data",
-        persist_directory="./chroma_langchain_db",
+        collection_name=collection_name,
+        persist_directory=persist_directory,
         embedding_function=embedding_function,
     )
-
 
 @tool
 def bm25_retrieval(query: str):
     """
-    Retrieves relevant documents from the Chroma vector store using the BM25 algorithm.
+    Retrieves relevant documents using BM25 algorithm.
 
     Args:
         query (str): The search query used to find relevant documents.
@@ -78,36 +62,36 @@ def bm25_retrieval(query: str):
     Returns:
         List[Dict[str, str]]: A list of dictionaries where each dictionary contains the title and dialogue of the retrieved documents.
     """
-    vector_store = initialize_vector_store()
+    all_results = []
 
-    # Fetch all documents
-    documents = vector_store.get()
+    for collection_name in collection_names:
+        vector_store = initialize_vector_store(collection_name)
+        
+        # Fetch all documents
+        documents = vector_store.get()
+        
+        text_spliter = RecursiveCharacterTextSplitter(chunk_size=1000,
+                                                      chunk_overlap=0,
+                                                      length_function=len)
 
-    text_spliter = RecursiveCharacterTextSplitter(chunk_size=1000,
-                                                  chunk_overlap=0,
-                                                  length_function=len)
+        documents = text_spliter.create_documents(texts=documents["documents"],
+                                                  metadatas=documents["metadatas"])
+        
+        bm25_retriever = BM25Retriever.from_documents(documents)
+        results = bm25_retriever.get_relevant_documents(query)
+        
+        formatted_results = [
+            {"collection": collection_name, "title": doc.metadata['title'], "dialogue": doc.page_content} 
+            for doc in results
+        ]
+        all_results.extend(formatted_results)
 
-    documents = text_spliter.create_documents(texts=documents["documents"],
-                                              metadatas=documents["metadatas"])
-    
-    # Convert raw documents to Document objects if needed
-    #documents = [Document(page_content=doc['page_content'], metadata=doc['metadata']) for doc in raw_documents['documents']]
-    
-    bm25_retriever = BM25Retriever.from_documents(documents)
-
-    
-    results = bm25_retriever.get_relevant_documents(query)
-
-    
-    formatted_results = [
-        {"title": doc.metadata['title'], "dialogue": doc.page_content} for doc in results
-    ]
-    return formatted_results
+    return all_results
 
 @tool
 def mmr_retrieval(query: str):
     """
-    Retrieves relevant documents from the Chroma vector store using the Maximal Marginal Relevance (MMR) algorithm.
+    Retrieves relevant documents using the Maximal Marginal Relevance (MMR) algorithm.
 
     Args:
         query (str): The search query used to find relevant documents.
@@ -115,22 +99,26 @@ def mmr_retrieval(query: str):
     Returns:
         List[Dict[str, str]]: A list of dictionaries where each dictionary contains the title and dialogue of the retrieved documents.
     """
-    vector_store = initialize_vector_store()
+    all_results = []
 
-    
-    mmr_retriever = vector_store.as_retriever(
-        search_type="mmr",
-        search_kwargs={'k': 3, 'fetch_k': 20, 'lambda_mult': 0.25}
-    )
+    for collection_name in collection_names:
+        vector_store = initialize_vector_store(collection_name)
+        
+        mmr_retriever = vector_store.as_retriever(
+            search_type="mmr",
+            search_kwargs={'k': 3, 'fetch_k': 20, 'lambda_mult': 0.25}
+        )
 
-    
-    results = mmr_retriever.get_relevant_documents(query)
+        results = mmr_retriever.get_relevant_documents(query)
+        
+        formatted_results = [
+            {"collection": collection_name, "title": doc.metadata['title'], "dialogue": doc.page_content} 
+            for doc in results
+        ]
+        all_results.extend(formatted_results)
 
-    
-    formatted_results = [
-        {"title": doc.metadata['title'], "dialogue": doc.page_content} for doc in results
-    ]
-    return formatted_results
+    return all_results
+
 
 @tool
 def ddg_retrieval(query: str):
@@ -154,36 +142,3 @@ def ddg_retrieval(query: str):
 
 
 
-llm = OpenAI(
-    # model_name="gpt-4o-mini",
-    # temperature=0.7,
-    # api_key=os.getenv("OPENAI_API_KEY")
-)
-
-
-tools = [
-    ddg_retrieval,
-    bm25_retrieval, 
-    mmr_retrieval
-    ]
-
-
-prompt = get_react_template()
-
-
-react_agent = create_react_agent(llm, tools, prompt)
-
-
-agent_executor = AgentExecutor(agent=react_agent, 
-                               tools=tools, 
-                               verbose=True,
-                               handle_parsing_errors=True)
-
-
-user_input = "can I drink cola after wisdom teeth removal?"
-
-
-result = agent_executor.invoke({"input": user_input})
-
-
-print(result)
