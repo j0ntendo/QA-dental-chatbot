@@ -9,13 +9,17 @@ from chatbot_tools.prompt import get_react_template
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
+import openai
+import streamlit as st
 
 
-load_dotenv()
+#load_dotenv()
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
 llm = OpenAI(
     model_name="gpt-4o-mini",
+    api_key=st.se
     
     
 )
