@@ -13,7 +13,7 @@ import openai
 import streamlit as st
 
 
-#load_dotenv()
+load_dotenv()
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 
@@ -24,7 +24,7 @@ llm = OpenAI(
 
 tools = [
     bm25_retrieval, 
-    #ddg_retrieval,
+    ddg_retrieval,
     mmr_retrieval
 ]
 

@@ -45,11 +45,15 @@ def initialize_vector_store(collection_name):
         Chroma: The initialized Chroma vector store.
     """
     embedding_function = OpenAIEmbeddings(model="text-embedding-3-large")  # Specify the embedding function
+    
+    collection_persist_directory = os.path.join(persist_directory, collection_name)
+    
     return Chroma(
         collection_name=collection_name,
-        persist_directory=persist_directory,
+        persist_directory=collection_persist_directory,
         embedding_function=embedding_function,
     )
+
 
 @tool
 def bm25_retrieval(query: str):
