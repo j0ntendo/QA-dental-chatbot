@@ -14,13 +14,11 @@ import streamlit as st
 
 
 #load_dotenv()
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 
 llm = OpenAI(
     model_name="gpt-4o-mini",
-    api_key=st.se
-    
     
 )
 
