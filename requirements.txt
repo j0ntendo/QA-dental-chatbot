@@ -12,5 +12,6 @@ rank_bm25
 streamlit
 duckduckgo_search
 streamlit-float
-pysqlite3-binary==0.5.0
+pysqlite3==0.4.6
+
 
