@@ -9,3 +9,5 @@ __pycache__/*
 chroma_langchain_db/genden_data
 .streamlit
 .streamlit/*
+.streamlit/
+.streamlit/secrets.toml
