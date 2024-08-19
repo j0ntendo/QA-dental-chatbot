@@ -1,0 +1,1 @@
+chroma_langchain_db/genden_data/chroma.sqlite3 filter=lfs diff=lfs merge=lfs -text
