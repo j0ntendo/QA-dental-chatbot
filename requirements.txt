@@ -11,3 +11,4 @@ tools
 rank_bm25
 streamlit
 duckduckgo_search
+streamlit-float
