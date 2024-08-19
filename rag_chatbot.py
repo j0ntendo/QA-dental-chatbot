@@ -11,6 +11,9 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 import openai
 import streamlit as st
+from langchain_community.callbacks.streamlit import (
+    StreamlitCallbackHandler,
+)
 
 
 load_dotenv()
@@ -19,6 +22,7 @@ os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 llm = OpenAI(
     model_name="gpt-4o-mini",
+    streaming=True
     
 )
 
@@ -43,10 +47,9 @@ agent_executor = AgentExecutor(
 )
 
 
-def handle_user_input(user_input: str) -> str:
-    
-    result = agent_executor.invoke({"input": user_input})
-    
+def handle_user_input(user_input: str) -> dict:
+    st_callback = StreamlitCallbackHandler(st.container())
+    result = agent_executor.invoke({"input": user_input}, {"callbacks": [st_callback]})
     return result
 
 

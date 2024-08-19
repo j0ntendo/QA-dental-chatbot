@@ -7,3 +7,5 @@ robot/
 __pycache__
 __pycache__/*
 chroma_langchain_db/genden_data
+.streamlit
+.streamlit/*
